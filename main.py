@@ -25,7 +25,7 @@ game = Game("Hra", {
         "Víš proč?",
         "Vidím ti to totiž na očích",
         "Oh, ano",
-        "Máš neskuteční hlad",
+        "Máš neskutečný hlad",
         "Takže...",
         "Víš kam se musíš dostat?",
         "Je to tak",
