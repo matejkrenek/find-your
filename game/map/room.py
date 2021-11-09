@@ -1,5 +1,6 @@
 from game.helpers import writer
 import shutil
+import os
 
 class Room:
     _game = None
@@ -37,7 +38,6 @@ class Room:
     
     def add_room(self, room):
         room.parent = self
-        room._game = self._game
         self.children.append(room)
 
     def doors_direction(self):
@@ -72,7 +72,7 @@ class Room:
 
         if(isinstance(screenplay, list)):
             for phrase in screenplay:
-                formated_phrase = phrase.format(rooms = len(self.children), rooms_directions=self.doors_direction()).center(shutil.get_terminal_size().columns)
+                formated_phrase = phrase.format(rooms = len(self.children), rooms_directions=self.doors_direction(), player = self._game._player.name).center(shutil.get_terminal_size().columns)
 
                 writer(formated_phrase, 0.05)
                 if phrase in self.data["input"]:
@@ -89,12 +89,23 @@ class Room:
             _parent = _parent.parent
         
         return level
-        
-    def print_map(self):
-        spaces = "  " * self.get_level() * 1
-        prefix = spaces + "|__" if self.parent else ""
-        print(prefix + self.name)
 
+    def set_game(self, game):
+        self._game = game
+        self._game.set_game_to_rooms(self)
+        
+    def print_map(self): 
+        direction = ""
+
+        if self.direction:
+            direction += " ["
+            direction += self.direction["name"]
+            direction += "]"
+
+        name = self.name + f'{direction}'
+        prefix = "".ljust(int((shutil.get_terminal_size().columns / 2 - 8) + (self.get_level() * 3)))
+
+        print(prefix + name)
         if self.children:
             for child in self.children:
                 child.print_map()

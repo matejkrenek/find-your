@@ -4,6 +4,7 @@ from game.helpers import writer
 
 import time
 import os
+import sys
 import ctypes
 import msvcrt
 import subprocess
@@ -25,9 +26,13 @@ class Game:
 
         if isinstance(map, Map):
             self._map = map
-            self._map.origin._game = self
         else:
             print("map parameter has to be type of game.map.Map")
+
+    def set_game_to_rooms(self, room):
+        if room.children:
+            for child in room.children:
+                child.set_game(self)
 
     def player(self, player = None):
         if not player:
@@ -42,11 +47,14 @@ class Game:
             if child.direction:
                 print(f"[{child.direction['name']}] můžeš jít {child.direction['4']}".center(shutil.get_terminal_size().columns))
         
-        prefix = ":)".ljust(int(shutil.get_terminal_size().columns / 2) - 4)
+        prefix = "".ljust(int(shutil.get_terminal_size().columns / 2) - 3)
         choice = input(prefix)
         
         if self._player.position.is_valid_direction(choice):
             room = self._player.position.find_room(choice)
+            time.sleep(0.5)
+            print("*otevírání dvěří*".center(shutil.get_terminal_size().columns))
+            time.sleep(0.5)
             self._player.move(room)
         else:
             print("neexistuje".center(shutil.get_terminal_size().columns))
@@ -68,12 +76,29 @@ class Game:
         else:
             print("screenplay parameter has to be type of list")
 
+        time.sleep(5)
+        os.system("cls")
+
+    def outro(self):
+        time.sleep(1)
+        os.system("cls")
+        time.sleep(1)
+        self.start()
+
     def start(self):
+        self._map.origin._game = self
+        self.set_game_to_rooms(self._map.origin)
         self.intro()
         self._player.move(self._map.origin)
 
     def stop(self):
-        pass
+        self.outro()
+
+    def finish(self):
+        time.sleep(1)
+        os.system("cls")
+        time.sleep(1)
+        sys.exit(0)
 
     def fullscreen(self):
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)

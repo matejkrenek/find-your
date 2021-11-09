@@ -10,53 +10,130 @@ from game.map.room import Room
 
 game = Game("Hra", {
     "screenplay": [
-        "ahoj, {player}."
+        "Nazdar Gandalfe...",
+        "Oh, ty nejsi gandalf",
+        "Nebo ano?",
+        "Já nevím",
+        "Hele víš ty co?",
+        "Radši mi řekni jak se jmenuješ:",
+        "Dobře, budu tě tedy nazývat tímto hloupím jménem",
+        "Předem se ti ale omlouvám...",
+        "Neumím skloňovat",
+        "Matěj mě to nenaučil",
+        "{player} být hodný",
+        "{player} za moment dostat mapu",
+        "Víš proč?",
+        "Vidím ti to totiž na očích",
+        "Oh, ano",
+        "Máš neskuteční hlad",
+        "Takže...",
+        "Víš kam se musíš dostat?",
+        "Je to tak",
+        "Do kuchyně",
+        "Ale nevím jestli tam pro tebe něco zbylo",
+        "Tady je ta mapa {player}",
+        "Radši si ji pořádně prohlédni",
+        "Stačí jedna chyba a jedeš znovu",
+        "A věř mi...",
+        "Nechceš toto vidět znova"
+
     ],
     "input": {
-        "nejprve mi řekni jak se jmenuješ ty šupáku": "self._player.ask_name()"
+        "Radši mi řekni jak se jmenuješ:": "self._player.ask_name()",
+        "Tady je ta mapa {player}": "self._map.print()",
     }
 })
 game.map(
     Map("Mapa hry", 
-        Room("Hlavní hala", {
+        Room("Rozcestník", {
                 "screenplay": [
-                    "Ok, jsi na začátku jsou tady {rooms} místnost/místnosti",
+                    "Tak hele",
+                    "Jsou tady {rooms} dveře",
+                    "Viděl jsi mapu...",
+                    "Byl by jsi fakt ňouma, kdyby jsi něco pokazil {player}",
                 ],
                 "input": {
-                    "Ok, jsi na začátku jsou tady {rooms} místnost/místnosti": "self._game.select_direction()"
+                    "Byl by jsi fakt ňouma, kdyby jsi něco pokazil {player}": "self._game.select_direction()"
                 }
             }, 
             [
-            Room("kuchyně", {
+            Room("Mordor", {
                 "screenplay": [
-                    "kuchyně",
+                    "Tak hele...",
+                    "Tohle jsme si nedomluvili",
+                    "Vždyť jsi říkal, že nejsi Gandalf",
+                    "Chceš snad do Temné věže?",
+                    "Tak to jsi si asi spletl Hru",
+                    "Čus...",
                 ],
-                "input": {}
+                "input": {
+                    "Čus...": "self._game.stop()"
+                }
             }, [
-                Room("Jindrův dvůr", {}, [], "left"),
-                Room("Ozynov", {}, [], "right"),
+                Room("Temná věž", {}, [], "left"),
+                Room("Hora stínu", {}, [], "right"),
+                Room("Jezero Nurnen", {}, [], "straight"),
             ], "left"),
-            Room("postelová místnost", {
+            Room("Varna", {
                 "screenplay": [
-                    "postelová místnost",
+                    "Jesse...",
+                    "Hej Jesse...",
                 ],
-                "input": {}
+                "input": {
+                    "Hej Jesse...": "self._game.stop()"
+                }
             }, [
-                Room("chlíveček", {}, [], "straight"),
-                Room("prdelov", {}, [], "left"),
+                Room("Sklad", {}, [], "straight"),
+                Room("Chlaďák na Metamfetamin", {}, [], "left"),
             ], "right"),
-            Room("koupelna", {
+            Room("Koupelna", {
                 "screenplay": [
-                    "koupelna",
+                    "Je pravda, že sprchu by jsi potřeboval {player}",
+                    "Kvůli tomu tady ale nejsi",
+                    "Takže...",
+                    "Kam teď?",
                 ],
-                "input": {}
+                "input": {
+                    "Kam teď?": "self._game.select_direction()"
+                }
             }, [
-                Room("pokojiček", {}, [], "straight")
+                Room("Pokoj na spaní pro osamocené", {
+                    "screenplay": [
+                        "Cítíš se sám {player}?",
+                        "A ospále",
+                        "Hele, ani se ti nedivím, když hraješ tuto hru"
+                    ],
+                    "input": {
+                        "Hele, ani se ti nedivím, když hraješ tuto hru": "self._game.stop()"
+                    }
+                }, [], "straight"),
+                Room("Plavací hala", {
+                    "screenplay": [
+                        "dneska není čtvrtek..."
+                    ],
+                    "input": {
+                        "dneska není čtvrtek...": "self._game.stop()"
+                    }
+                }, [], "left"),
+                Room("Kuchyně", {
+                    "screenplay": [
+                        "{player}...",
+                        "Ty tu maturitu možná i uděláš",
+                        "Nevěřil jsem, že to dokážeš",
+                        "...",
+                        "...",
+                        "Ups",
+                        "Nic tady není co?",
+                        "R.I.P.",
+                    ],
+                    "input": {
+                        "R.I.P.": "self._game.finish()"
+                    }
+                }, [], "right"),
             ], "straight"),
         ])
-    )
-)
-game.player(Player("hrač 1"))
+))
 
+game.player(Player("idk"))
 if __name__ == "__main__":
     game.start()
