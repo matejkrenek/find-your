@@ -57,7 +57,9 @@ class Game:
             time.sleep(0.5)
             self._player.move(room)
         else:
-            print("neexistuje".center(shutil.get_terminal_size().columns))
+            print("\n")
+            print("Jseš si jistý?".center(shutil.get_terminal_size().columns))
+            print("\n")
             self.select_direction()
 
 
