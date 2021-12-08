@@ -3,7 +3,6 @@ import shutil
 import os
 
 class Room:
-    _game = None
     DIRECTION = {
         "left": {
             "name": "left",
@@ -33,12 +32,15 @@ class Room:
         else:
             self.direction = None
 
-        for room in rooms:
-            self.add_room(room)
+        if(rooms):
+            for room in rooms:
+                self.add_room(room)
     
-    def add_room(self, room):
+    def room(self, room):
         room.parent = self
         self.children.append(room)
+
+        return room
 
     def doors_direction(self):
         string = ""
@@ -49,11 +51,11 @@ class Room:
 
         return string
 
-    def is_valid_direction(self, string):
+    def is_valid_name(self, string):
         exist = False
 
         for child in self.children:
-            if child.direction and child.direction["name"].lower() == string.lower():
+            if child.direction and child.name.lower() == string.lower():
                 exist = True
             
             if exist:
@@ -61,24 +63,31 @@ class Room:
 
     def find_room(self, string):
         for child in self.children:
-            if child.direction and child.direction["name"].lower() == string.lower():
+            if child.name and child.name.lower() == string.lower():
                 return child
             
                 
     def intro(self, screenplay = None):
         if not screenplay:
-            screenplay = self.data["screenplay"]
-            
+            screenplay = self.data["screenplay"]            
 
         if(isinstance(screenplay, list)):
             for phrase in screenplay:
-                formated_phrase = phrase.format(rooms = len(self.children), rooms_directions=self.doors_direction(), player = self._game._player.name).center(shutil.get_terminal_size().columns)
-
+                formated_phrase = phrase.format(rooms = len(self.children), rooms_directions=self.doors_direction(), player = self._game._player.get_name()).center(shutil.get_terminal_size().columns)
                 writer(formated_phrase, 0.05)
                 if phrase in self.data["input"]:
                     eval(self.data["input"][phrase])
+
+                    if screenplay.index(phrase) == len(screenplay) - 1:
+                        if self.children:
+                            self._game.select_direction()
+                        else:
+                            self._game._player.move(self.parent)
+
+                if screenplay.index(phrase) == len(screenplay) - 1 and phrase not in self.data["input"]:
+                    self._game.select_direction()
         else:
-            print("screenplay parameter has to be type of list")
+            return
     
     def get_level(self):
         level = 0
@@ -93,7 +102,28 @@ class Room:
     def set_game(self, game):
         self._game = game
         self._game.set_game_to_rooms(self)
+
+    def ask_questions(self, context):
+        os.system("cls")
+        for item in context:
+            question = item["question"]
+            options = item["options"]
+            answear = item["answear"]
+
+            writer(question.center(shutil.get_terminal_size().columns), 0.05)
+
+            for option in options:
+                print(f"[{options.index(option) + 1}] {option}".center(shutil.get_terminal_size().columns))
         
+            prefix = "".ljust(int(shutil.get_terminal_size().columns / 2) - 3)
+            choice = int(input(prefix))
+
+            if choice - 1 == answear:
+                self._game._player.score[self.name]+=1
+            else:
+                print("špatná odpověď".center(shutil.get_terminal_size().columns))
+                print(f"spravna odpoved je {answear + 1}".center(shutil.get_terminal_size().columns))
+
     def print_map(self): 
         direction = ""
 

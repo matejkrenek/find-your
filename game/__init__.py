@@ -1,19 +1,18 @@
 from game.player import Player
 from game.map import Map
-from game.helpers import writer
+from game.helpers import writer, fullscreen, font
 
 import time
 import os
 import sys
-import ctypes
-import msvcrt
-import subprocess
 import shutil
-from ctypes import wintypes
 
 class Game:
-    def __init__(self, name, data = {}, player = None, map = None):
-        self.name = name
+    params = {}
+    actions = {}
+
+    def __init__(self, name, data = {}, player:Player = None, map:Map = None):
+        self.__name = name
         self.data = data
         self.map(map)
         self.player(player)
@@ -26,6 +25,8 @@ class Game:
 
         if isinstance(map, Map):
             self._map = map
+
+            return self._map
         else:
             print("map parameter has to be type of game.map.Map")
 
@@ -39,18 +40,20 @@ class Game:
             return
         if isinstance(player, Player):
             self._player = player
+
+            return self._player
         else:
             print("player parameter has to be type of game.player.Player")
 
     def select_direction(self):
         for child in self._player.position.children:
             if child.direction:
-                print(f"[{child.direction['name']}] můžeš jít {child.direction['4']}".center(shutil.get_terminal_size().columns))
+                print(f"{child.name}[{self._player.score[child.name]}/{len(child.data['data']['quiz'])}]".center(shutil.get_terminal_size().columns))
         
         prefix = "".ljust(int(shutil.get_terminal_size().columns / 2) - 3)
         choice = input(prefix)
         
-        if self._player.position.is_valid_direction(choice):
+        if self._player.position.is_valid_name(choice):
             room = self._player.position.find_room(choice)
             time.sleep(0.5)
             print("*otevírání dvěří*".center(shutil.get_terminal_size().columns))
@@ -66,11 +69,10 @@ class Game:
     def intro(self, screenplay = None):
         if not screenplay:
             screenplay = self.data["screenplay"]
-            
 
         if(isinstance(screenplay, list)):
             for phrase in screenplay:
-                formated_phrase = phrase.format(player = self._player.name).center(shutil.get_terminal_size().columns)
+                formated_phrase = phrase.format(player = self._player.name()).center(shutil.get_terminal_size().columns)
 
                 writer(formated_phrase, 0.05)
                 if phrase in self.data["input"]:
@@ -78,8 +80,24 @@ class Game:
         else:
             print("screenplay parameter has to be type of list")
 
-        time.sleep(5)
+        self.init_player()
+
+        time.sleep(1)
         os.system("cls")
+
+    def init_player(self):
+        self._player.score = {}
+        origin = self._map.get_origin()
+
+        for room in origin.children:
+            self._player.score[room.name] = 0
+
+
+    def name(self):
+        return self.__name
+
+    def screenplay(self):
+        return self.data["screenplay"]
 
     def outro(self):
         time.sleep(1)
@@ -88,10 +106,11 @@ class Game:
         self.start()
 
     def start(self):
-        self._map.origin._game = self
-        self.set_game_to_rooms(self._map.origin)
+        origin = self._map.get_origin()
+        origin.set_game(self)
+        self.set_game_to_rooms(self._map.get_origin())
         self.intro()
-        self._player.move(self._map.origin)
+        self._player.move(self._map.get_origin())
 
     def stop(self):
         self.outro()
@@ -102,69 +121,23 @@ class Game:
         time.sleep(1)
         sys.exit(0)
 
-    def fullscreen(self):
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        user32 = ctypes.WinDLL('user32', use_last_error=True)
+    def room_iterate(self, rooms:list, origin = None, Room = None):
+        for idx in range(len(rooms)):      
+            room = rooms[idx]  
 
-        SW_MAXIMIZE = 3
+            new_room = origin.room(Room(room["name"], {
+                "screenplay": room["screenplay"],
+                "input": room["input"],
+                "data": room["data"]
+            }, None, room["direction"]))
+            
 
-        kernel32.GetConsoleWindow.restype = wintypes.HWND
-        kernel32.GetLargestConsoleWindowSize.restype = wintypes._COORD
-        kernel32.GetLargestConsoleWindowSize.argtypes = (wintypes.HANDLE,)
-        user32.ShowWindow.argtypes = (wintypes.HWND, ctypes.c_int)
-
-        def maximize_console(lines=None):
-            fd = os.open('CONOUT$', os.O_RDWR)
-            try:
-                hCon = msvcrt.get_osfhandle(fd)
-                max_size = kernel32.GetLargestConsoleWindowSize(hCon)
-                if max_size.X == 0 and max_size.Y == 0:
-                    raise ctypes.WinError(ctypes.get_last_error())
-            finally:
-                os.close(fd)
-            cols = max_size.X
-            hWnd = kernel32.GetConsoleWindow()
-            if cols and hWnd:
-                if lines is None:
-                    lines = max_size.Y
-                else:
-                    lines = max(min(lines, 9999), max_size.Y)
-                subprocess.check_call('mode.com con cols={} lines={}'.format(
-                                        cols, lines))
-                user32.ShowWindow(hWnd, SW_MAXIMIZE)
-
-        maximize_console()
-
-    def font(self):
-        LF_FACESIZE = 32
-        STD_OUTPUT_HANDLE = -11
-
-        class COORD(ctypes.Structure):
-            _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
-
-        class CONSOLE_FONT_INFOEX(ctypes.Structure):
-            _fields_ = [("cbSize", ctypes.c_ulong),
-                        ("nFont", ctypes.c_ulong),
-                        ("dwFontSize", COORD),
-                        ("FontFamily", ctypes.c_uint),
-                        ("FontWeight", ctypes.c_uint),
-                        ("FaceName", ctypes.c_wchar * LF_FACESIZE)]
-
-        font = CONSOLE_FONT_INFOEX()
-        font.cbSize = ctypes.sizeof(CONSOLE_FONT_INFOEX)
-        font.nFont = 12
-        font.dwFontSize.X = 11
-        font.dwFontSize.Y = 18
-        font.FontFamily = 54
-        font.FontWeight = 400
-        font.FaceName = "Lucida Console"
-
-        handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-        ctypes.windll.kernel32.SetCurrentConsoleFontEx(
-                handle, ctypes.c_long(False), ctypes.pointer(font))
+            if "rooms" in room:
+                self.room_iterate(room["rooms"], new_room, Room)
 
     def init(self):
-        self.font()
-        self.fullscreen()
+        font()
+        fullscreen()
+        
         time.sleep(0.5)
         os.system("cls")
